@@ -1,0 +1,38 @@
+---
+resources:
+- name: tkg-cluster-yaml
+  type: git
+  icon: github
+  source:
+    uri: https://github.com/abhijit-vmw/tkgm
+    branch: main
+- name: tanzu-concourse-artefacts
+  type: git
+  icon: github
+  source:
+    uri: https://github.com/akangale/tanzu-concourse-artefacts
+    branch: main
+
+jobs:
+- name: tanzu-create-management-cluster
+  plan:
+  - get: tkg-cluster-yaml
+    trigger: true
+  - get: tanzu-concourse-artefacts
+    trigger: true
+  - task: create-management-cluster
+    config:
+      run:
+        path: sh
+        args: ["./tanzu-concourse-artefacts/management-create/script/tkg-mgmt-create.sh"]
+      inputs:
+        - name: tkg-cluster-yaml
+        - name: tanzu-concourse-artefacts
+      params: 
+        TKG_MGMT_CLUSTER_YAML_PATH: ./tkg-cluster-yaml/management.yaml
+      platform: linux
+      image_resource:
+        type: registry-image
+        source: 
+          repository: naresh2021/tanzu-cli-image
+          tag: 1.3.1
